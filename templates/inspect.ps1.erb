@@ -1,4 +1,4 @@
-$pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2
+$pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
 
 $certificate = gi <%= @location %>\<%= @name %>
 switch -regex ($certificate.Extension.ToUpper()) {
@@ -9,11 +9,9 @@ switch -regex ($certificate.Extension.ToUpper()) {
         $pfx.Import([System.IO.File]::ReadAllBytes("<%= @location %>\\<%= @name %>"))
     }
     ".P7B|.SST" {
-        $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
         $pfx.Import([System.IO.File]::ReadAllBytes("<%= @location %>\\<%= @name %>"))
     }
     ".PFX" {
-        $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
         $pfx.import("<%= @location %>\\<%= @name %>","<%= @password %>","Exportable,PersistKeySet")
     }
 }
