@@ -1,33 +1,52 @@
 $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
 
-$cert = gi <%= @location %>/<%= @name %>
+$location = @'
+<%= @location %>
+'@
+$name = @'
+<%= @name %>
+'@
+$root_store = @'
+<%= @root_store %>
+'@
+$store_dir = @'
+<%= @store_dir %>
+'@
+$password = @'
+<%= @password %>
+'@
+$thumbprint = @'
+<%= @thumbprint %>
+'@
+
+$cert = gi $location/$name
 
 switch -regex ($cert.Extension.ToUpper()) {
     ".CER|.DER" {
-        $pfx.import("<%= @location %>\\<%= @name %>","<%= @password %>","Exportable,PersistKeySet")
+        $pfx.import("$location\\$name","$password","Exportable,PersistKeySet")
     }
     ".CRT" {
-        $pfx.Import([System.IO.File]::ReadAllBytes("<%= @location %>\\<%= @name %>"))
+        $pfx.Import([System.IO.File]::ReadAllBytes("$location\\$name"))
     }
     ".P7B|.SST" {
-        $pfx.Import([System.IO.File]::ReadAllBytes("<%= @location %>\\<%= @name %>"))
+        $pfx.Import([System.IO.File]::ReadAllBytes("$location\\$name"))
     }
     ".PFX" {
-        $pfx.import("<%= @location %>\\<%= @name %>","<%= @password %>","Exportable,PersistKeySet")
+        $pfx.import("$location\\$name","$password","Exportable,PersistKeySet")
     }
 }
 
-$store = new-object System.Security.Cryptography.X509Certificates.X509Store("<%= @store_dir %>","<%= @root_store %>")
+$store = new-object System.Security.Cryptography.X509Certificates.X509Store("$store_dir","$root_store")
 $store.open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 
-$intermediatestore = new-object System.Security.Cryptography.X509Certificates.X509Store("CA","<%= @root_store %>")
+$intermediatestore = new-object System.Security.Cryptography.X509Certificates.X509Store("CA","$root_store")
 $intermediatestore.open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 
 foreach($cert in $pfx) {
-  if($cert.Thumbprint -ne "<%= @thumbprint %>") {
+  if($cert.Thumbprint -ne "$thumbprint") {
       $intermediatestore.Add($cert)
   }
-  elseif($cert.Thumbprint -eq "<%= @thumbprint %>") {
+  elseif($cert.Thumbprint -eq "$thumbprint") {
       $store.Add($cert)
   }
   else {

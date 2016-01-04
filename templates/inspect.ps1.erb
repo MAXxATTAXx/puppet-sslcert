@@ -1,24 +1,43 @@
 $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
 
-$certificate = gi <%= @location %>\<%= @name %>
+$location = @'
+<%= @location %>
+'@
+$name = @'
+<%= @name %>
+'@
+$root_store = @'
+<%= @root_store %>
+'@
+$store_dir = @'
+<%= @store_dir %>
+'@
+$password = @'
+<%= @password %>
+'@
+$thumbprint = @'
+<%= @thumbprint %>
+'@
+
+$certificate = gi $location\$name
 switch -regex ($certificate.Extension.ToUpper()) {
     ".CER|.DER" {
-        $pfx.import("<%= @location %>\\<%= @name %>","<%= @password %>","Exportable,PersistKeySet")
+        $pfx.import("$location\\$name","$password","Exportable,PersistKeySet")
     }
     ".CRT" {
-        $pfx.Import([System.IO.File]::ReadAllBytes("<%= @location %>\\<%= @name %>"))
+        $pfx.Import([System.IO.File]::ReadAllBytes("$location\\$name"))
     }
     ".P7B|.SST" {
-        $pfx.Import([System.IO.File]::ReadAllBytes("<%= @location %>\\<%= @name %>"))
+        $pfx.Import([System.IO.File]::ReadAllBytes("$location\\$name"))
     }
     ".PFX" {
-        $pfx.import("<%= @location %>\\<%= @name %>","<%= @password %>","Exportable,PersistKeySet")
+        $pfx.import("$location\\$name","$password","Exportable,PersistKeySet")
     }
 }
 
 
-$installedCerts = @(Get-ChildItem -R cert:\<%= @root_store %>\<%= @store_dir %>)
-$intermediateCerts = @(Get-ChildItem -R cert:\<%= @root_store %>\CA)
+$installedCerts = @(Get-ChildItem -R cert:\$root_store\$store_dir)
+$intermediateCerts = @(Get-ChildItem -R cert:\$root_store\CA)
 
 $installedCertCount = 0
 $installedIntermediateCount = 0
@@ -27,14 +46,14 @@ $installedIntermediateCount = 0
 if (($pfx -ne $null) -and ($installedCerts -ne $null) -and ($intermediateCerts -ne $null)) {
     foreach($cert in $pfx)
     {
-        if($cert.Thumbprint -ne "<%= @thumbprint %>") {
+        if($cert.Thumbprint -ne "$thumbprint") {
             foreach ($intermediate in $intermediateCerts) {
                 if($intermediate.Thumbprint -eq $cert.Thumbprint) {
                     $installedIntermediateCount ++
                 }
             }
         }
-        elseif ($cert.Thumbprint -eq "<%= @thumbprint %>") {
+        elseif ($cert.Thumbprint -eq "$thumbprint") {
             foreach ($installedCert in $installedCerts) {
                 if($installedCert.Thumbprint -eq $cert.Thumbprint) {
                     $installedCertCount ++
